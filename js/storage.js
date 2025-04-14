@@ -80,4 +80,29 @@ class StorageManager {
         localStorage.removeItem(this.storagePrefix + `scores_${username}`);
         localStorage.removeItem(this.storagePrefix + `stats_${username}`);
     }
+
+    saveUser(user) {
+        const key = this.storagePrefix + `user_${user.username}`;
+        localStorage.setItem(key, JSON.stringify(user));
+    }
+
+    getUser(username) {
+        const key = this.storagePrefix + `user_${username}`;
+        const user = localStorage.getItem(key);
+        return user ? JSON.parse(user) : null;
+    }
+
+    updateUser(username, updates) {
+        const user = this.getUser(username);
+        if (!user) return null;
+
+        const updatedUser = { ...user, ...updates };
+        this.saveUser(updatedUser);
+        return updatedUser;
+    }
+
+    deleteUser(username) {
+        const key = this.storagePrefix + `user_${username}`;
+        localStorage.removeItem(key);
+    }
 }

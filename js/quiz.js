@@ -15,20 +15,25 @@ class Question {
 }
 
 class UserProgress {
-    constructor() {
-        this.activeQuizzes = {}; // { quizId: { answeredQuestions: [questionId, ...] } }
-        this.completedQuizzes = []; // Array of completed quiz IDs
+    constructor(storageManager) {
+        this.storageManager = storageManager; // Add StorageManager instance
+        this.activeQuizzes = this.storageManager.getUserStats('activeQuizzes') || {}; // Load active quizzes
+        this.completedQuizzes = Array.isArray(this.storageManager.getUserStats('completedQuizzes'))
+            ? this.storageManager.getUserStats('completedQuizzes')
+            : []; // Ensure completedQuizzes is an array
     }
 
     startQuiz(quizId) {
         if (!this.activeQuizzes[quizId]) {
             this.activeQuizzes[quizId] = { answeredQuestions: [] };
+            this.storageManager.updateUserStats('activeQuizzes', this.activeQuizzes); // Persist active quizzes
         }
     }
 
     answerQuestion(quizId, questionId) {
         if (this.activeQuizzes[quizId]) {
             this.activeQuizzes[quizId].answeredQuestions.push(questionId);
+            this.storageManager.updateUserStats('activeQuizzes', this.activeQuizzes); // Persist active quizzes
         }
     }
 
@@ -36,6 +41,8 @@ class UserProgress {
         if (this.activeQuizzes[quizId]) {
             this.completedQuizzes.push(quizId);
             delete this.activeQuizzes[quizId];
+            this.storageManager.updateUserStats('activeQuizzes', this.activeQuizzes); // Persist active quizzes
+            this.storageManager.updateUserStats('completedQuizzes', this.completedQuizzes); // Persist completed quizzes
         }
     }
 }
@@ -44,10 +51,15 @@ class QuizManager {
     constructor() {
         this.currentQuiz = null;
         this.apiUrl = 'https://opentdb.com/api.php';
+        this.storageManager = new StorageManager(); // Add StorageManager instance
     }
 
     async init() {
-        // Initialize quiz state
+        await this.storageManager.init(); // Initialize StorageManager
+        const savedQuiz = this.storageManager.loadGameState();
+        if (savedQuiz) {
+            this.currentQuiz = savedQuiz; // Restore saved quiz state
+        }
     }
 
     async fetchQuestions(amount = 5) {
@@ -105,5 +117,16 @@ class QuizManager {
         score += proximityBonus;
 
         return Math.max(0, Math.round(score));
+    }
+
+    saveCurrentQuiz() {
+        if (this.currentQuiz) {
+            this.storageManager.saveGameState(this.currentQuiz); // Save current quiz state
+        }
+    }
+
+    clearCurrentQuiz() {
+        this.currentQuiz = null;
+        this.storageManager.clearGameState(); // Clear saved quiz state
     }
 }

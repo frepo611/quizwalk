@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizWalk Test Environment</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <h1>Test Environment</h1>
+    <div id="testOutput" class="test-output">
+        <h2>Output:</h2>
+        <pre id="output"></pre>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/quiz.js"></script>
+    <script>
+        // Example test script
+        const output = document.getElementById('output');
+        const log = (message) => {
+            output.textContent += message + '\n';
+        };
+
+        // Test StorageManager
+        const storageManager = new StorageManager();
+        storageManager.init().then(() => {
+            log('StorageManager initialized.');
+
+            // Test saving and loading game state
+            const testState = { quizId: 1, progress: '50%' };
+            storageManager.saveGameState(testState);
+            const loadedState = storageManager.loadGameState();
+            log('Saved Game State: ' + JSON.stringify(loadedState));
+
+            // Test clearing game state
+            storageManager.clearGameState();
+            const clearedState = storageManager.loadGameState();
+            log('Cleared Game State: ' + JSON.stringify(clearedState));
+
+            // Test user-related functionality
+            const testUser = {
+                username: 'test_user',
+                email: 'test@example.com',
+                preferences: { theme: 'dark', notifications: true }
+            };
+
+            // Save user
+            storageManager.saveUser(testUser);
+            log('User saved: ' + JSON.stringify(testUser));
+
+            // Retrieve user
+            const retrievedUser = storageManager.getUser('test_user');
+            log('Retrieved User: ' + JSON.stringify(retrievedUser));
+
+            // Update user
+            const updatedUser = storageManager.updateUser('test_user', { preferences: { theme: 'light' } });
+            log('Updated User: ' + JSON.stringify(updatedUser));
+
+            // Delete user
+     /*        storageManager.deleteUser('test_user');
+            const deletedUser = storageManager.getUser('test_user');
+      */       log('Deleted User: ' + JSON.stringify(deletedUser));
+
+            // Inspect localStorage
+            log('Current localStorage: ' + JSON.stringify(localStorage, null, 2));
+
+            // Test quiz in progress
+            const userProgress = new UserProgress(storageManager);
+
+            // Start a quiz
+            const quizId = 1;
+            userProgress.startQuiz(quizId);
+            log('Started Quiz: ' + JSON.stringify(userProgress.activeQuizzes));
+
+            // Answer a question
+            const questionId = 101;
+            userProgress.answerQuestion(quizId, questionId);
+            log('Answered Question: ' + JSON.stringify(userProgress.activeQuizzes));
+
+            // Complete the quiz
+            userProgress.completeQuiz(quizId);
+            log('Completed Quizzes: ' + JSON.stringify(userProgress.completedQuizzes));
+            log('Active Quizzes after completion: ' + JSON.stringify(userProgress.activeQuizzes));
+        }).catch((error) => {
+            log('Error initializing StorageManager: ' + error.message);
+        });
+    </script>
+</body>
+</html>
