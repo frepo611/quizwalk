@@ -12,7 +12,7 @@
         <form id="authForm" class="auth-form">
             <h2>Welcome to QuizWalk</h2>
             <input type="text" id="username" placeholder="Enter your username" required>
-            <button type="submit" class="btn">Start Playing</button>
+            <button type="submit" class="btn">Log in</button>
         </form>
     </div>
 
@@ -34,6 +34,29 @@
             </div>
         </div>
 
+        <!-- Category Selection -->
+        <div id="category-selection">
+            <label for="categories">Select categories:</label>
+            <div id="categories">
+                <label><input type="checkbox" value="9"> General Knowledge</label>
+                <label><input type="checkbox" value="17"> Science & Nature</label>
+                <label><input type="checkbox" value="20"> Mythology</label>
+                <label><input type="checkbox" value="21"> Sports</label>
+                <label><input type="checkbox" value="22"> Geography</label>
+                <label><input type="checkbox" value="23"> History</label>
+                <label><input type="checkbox" value="24"> Politics</label>
+                <label><input type="checkbox" value="25"> Art</label>
+                <label><input type="checkbox" value="27"> Animals</label>
+                <label><input type="checkbox" value="28"> Vehicles</label>                
+            </div>
+        </div>
+
+        <!-- Amount Selection -->
+        <div id="amount-selection">
+            <label for="amount">Number of questions:</label>
+            <input type="number" id="amount" name="amount" min="1" max="49" value="10">
+        </div>
+
         <!-- Question Section -->
         <div id="questionSection" class="question-card hidden">
             <h3 id="questionText"></h3>
@@ -48,6 +71,13 @@
         <!-- Score Display -->
         <div id="scoreDisplay" class="hidden">
             <h3>Current Score: <span id="currentScore">0</span></h3>
+        </div>
+
+        <!-- Final Score Display -->
+        <div id="finalScoreDisplay" class="final-score hidden">
+            <h2>Quiz Complete!</h2>
+            <p>Your final score: <span id="finalScore">0</span>/<span id="totalQuestions">0</span></p>
+            <!-- Add buttons for review/play again later -->
         </div>
     </div>
 
