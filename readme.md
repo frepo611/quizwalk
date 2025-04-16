@@ -6,7 +6,10 @@ QuizWalk is a web application that combines quizzes with geolocation-based gamep
 
 - **Dynamic Quizzes**: Fetches questions from the Open Trivia Database (https://opentdb.com/).
 - **Geolocation Integration**: Each question is tied to a specific location.
-- **User Progress Tracking**: Tracks active and completed quizzes.
+- **User Progress Tracking**: Tracks active and completed quizzes in the browser local storage.
+
+## Play
+Deployed as a GitHub Pages site at [QuizWalk](https://frepo611.github.io/quizwalk/) 
 
 ## Installation
 
