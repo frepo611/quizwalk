@@ -83,6 +83,8 @@ class QuizManager {
     constructor() {
         this.currentQuiz = null;
         this.apiUrl = 'https://opentdb.com/api.php';
+        this.tokenUrl = 'https://opentdb.com/api_token.php?command=request';
+        this.sessionToken = null;
         this.storageManager = new StorageManager(); // Add StorageManager instance
     }
 
@@ -92,48 +94,124 @@ class QuizManager {
         if (savedQuiz) {
             this.currentQuiz = savedQuiz; // Restore saved quiz state
         }
+        
+        // Try to load or request a session token
+        this.sessionToken = localStorage.getItem('trivia_token');
+    }
+
+    async getSessionToken() {
+        try {
+            if (!this.sessionToken) {
+                const response = await fetch(this.tokenUrl);
+                const data = await response.json();
+                if (data.response_code === 0) {
+                    this.sessionToken = data.token;
+                    localStorage.setItem('trivia_token', this.sessionToken);
+                }
+            }
+            return this.sessionToken;
+        } catch (error) {
+            console.error('Error getting session token:', error);
+            return null;
+        }
     }
 
     async fetchQuestions(amount = 5, categories = []) {
         // List of default categories if none are selected
         const defaultCategories = [9, 17, 20, 21, 22, 23, 24, 25, 27, 28];
         const selectedCategories = (categories && categories.length > 0) ? categories : defaultCategories;
-        const numCategories = selectedCategories.length;
-        const baseCount = Math.floor(amount / numCategories);
-        const remainder = amount % numCategories;
-        let allQuestions = [];
-
-        // Helper to fetch questions for a single category
-        const fetchForCategory = async (catId, num) => {
-            const url = `${this.apiUrl}?amount=${num}&category=${catId}`;
+        
+        // Get or create session token
+        const token = await this.getSessionToken();
+        
+        // Build base URL with amount and token
+        let url = `${this.apiUrl}?amount=${amount}`;
+        if (token) {
+            url += `&token=${token}`;
+        }
+        
+        // Only add category parameter if exactly one category is selected
+        // For multiple categories, we'll filter the results after
+        if (selectedCategories.length === 1) {
+            url += `&category=${selectedCategories[0]}`;
+        }
+        
+        try {
+            // Make a single API request
+            console.log(`Making API request to: ${url}`);
             const response = await fetch(url);
             const data = await response.json();
+            
             if (data.response_code === 0) {
-                return data.results;
+                let results = data.results;
+                
+                // If multiple categories are selected, filter the results
+                if (selectedCategories.length > 1) {
+                    results = results.filter(q => {
+                        const categoryId = this.getCategoryId(q.category);
+                        return selectedCategories.includes(categoryId);
+                    });
+                    
+                    // If we don't have enough questions after filtering, return what we have
+                    console.log(`After filtering for selected categories, got ${results.length} questions`);
+                }
+                
+                return this.processQuestions(results);
+            } else if (data.response_code === 4) {
+                // Token empty, reset token
+                console.log("Token empty, resetting token");
+                this.sessionToken = null;
+                localStorage.removeItem('trivia_token');
+                
+                // Try one more time without token
+                console.log("Retrying without token");
+                const newUrl = url.replace(/&token=[^&]+/, '');
+                const newResponse = await fetch(newUrl);
+                const newData = await newResponse.json();
+                
+                if (newData.response_code === 0) {
+                    let results = newData.results;
+                    
+                    // Apply the same filtering logic if needed
+                    if (selectedCategories.length > 1) {
+                        results = results.filter(q => {
+                            const categoryId = this.getCategoryId(q.category);
+                            return selectedCategories.includes(categoryId);
+                        });
+                    }
+                    
+                    return this.processQuestions(results);
+                }
             } else {
-                return [];
+                console.error(`API Error (code ${data.response_code}): `, data);
             }
+            
+            // If we get here, we couldn't get questions, return empty array
+            return [];
+            
+        } catch (error) {
+            console.error('Error fetching questions:', error);
+            return [];
+        }
+    }
+    
+    // Helper to get numeric category ID from category string
+    getCategoryId(categoryStr) {
+        // Map of category strings to IDs based on Open Trivia DB
+        const categoryMap = {
+            'General Knowledge': 9,
+            'Science & Nature': 17, 
+            'Mythology': 20,
+            'Sports': 21,
+            'Geography': 22,
+            'History': 23,
+            'Politics': 24,
+            'Art': 25,
+            'Animals': 27,
+            'Vehicles': 28
         };
-
-        // Decide how many questions to fetch from each category
-        for (let i = 0; i < numCategories; i++) {
-            // Distribute remainder: first 'remainder' categories get one extra
-            const numQuestions = baseCount + (i < remainder ? 1 : 0);
-            if (numQuestions > 0) {
-                const results = await fetchForCategory(selectedCategories[i], numQuestions);
-                allQuestions = allQuestions.concat(results);
-            }
-        }
-
-        // Shuffle all questions
-        for (let i = allQuestions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
-        }
-
-        // Limit to requested amount
-        const limitedQuestions = allQuestions.slice(0, amount);
-        return this.processQuestions(limitedQuestions);
+        
+        return categoryMap[categoryStr] || 9; // Default to General Knowledge
     }
 
     processQuestions(questions) {

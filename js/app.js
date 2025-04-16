@@ -48,6 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return txt.value;
     }
 
+    // Show category and amount selection UI
+    function showQuizOptions(show) {
+        document.getElementById('category-selection').style.display = show ? '' : 'none';
+        document.getElementById('amount-selection').style.display = show ? '' : 'none';
+    }
+
+    // On page load, show quiz options
+    showQuizOptions(true);
+
     // Initialize StorageManager and QuizManager
     storageManager.init().then(() => {
         quizManager.init(); // This loads the global quiz state if it exists
@@ -65,6 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
             userDisplay.textContent = `Logged in as: ${currentUser.username}`;
             authSection.classList.add('hidden');
             gameSection.classList.remove('hidden');
+            
+            // Show category and amount selection when user logs in
+            showQuizOptions(true);
 
             // Check if there's a globally saved quiz and if user has progress for it
             const savedQuiz = quizManager.currentQuiz; // Get quiz loaded by quizManager.init()
@@ -89,10 +101,18 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUser = null;
         authSection.classList.remove('hidden');
         gameSection.classList.add('hidden');
+        showQuizOptions(false);
     });
 
     // Start a new game
     startGameBtn.addEventListener('click', async () => {
+        // If quiz options are hidden, show them first
+        if (document.getElementById('category-selection').style.display === 'none') {
+            showQuizOptions(true);
+            return; // Exit function so user can select options
+        }
+
+        // Otherwise proceed with quiz creation (user has already seen/set categories)
         quizCompleted = false;
         currentScore.textContent = "0";
         scoreDisplay.classList.remove('hidden');
@@ -118,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         userProgress.startQuiz(newQuizId);
         displayQuestion(0);
+        
+        // Hide quiz options when quiz starts
+        showQuizOptions(false);
     });
 
     // Display a question
@@ -218,6 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
             finalScoreDisplay.classList.remove('hidden');
             questionSection.classList.add('hidden');
             scoreDisplay.classList.add('hidden');
+            
+            // Keep category and amount selection hidden after quiz completion
+            showQuizOptions(false);
         }
     }
 });
