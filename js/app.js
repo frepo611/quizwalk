@@ -48,13 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return txt.value;
     }
 
-    // Show category and amount selection UI
+    // Show quiz options - hide category selection, only show amount selection
     function showQuizOptions(show) {
-        document.getElementById('category-selection').style.display = show ? '' : 'none';
+        // Always hide category selection
+        document.getElementById('category-selection').style.display = 'none';
         document.getElementById('amount-selection').style.display = show ? '' : 'none';
     }
 
-    // On page load, show quiz options
+    // On page load, show quiz options (category will be hidden)
     showQuizOptions(true);
 
     // Initialize StorageManager and QuizManager
@@ -106,13 +107,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start a new game
     startGameBtn.addEventListener('click', async () => {
-        // If quiz options are hidden, show them first
-        if (document.getElementById('category-selection').style.display === 'none') {
+        // If quiz options are hidden, show them first (but category will still be hidden)
+        if (document.getElementById('amount-selection').style.display === 'none') {
             showQuizOptions(true);
-            return; // Exit function so user can select options
+            return; // Exit function so user can select amount
         }
 
-        // Otherwise proceed with quiz creation (user has already seen/set categories)
+        // Otherwise proceed with quiz creation
         quizCompleted = false;
         currentScore.textContent = "0";
         scoreDisplay.classList.remove('hidden');
@@ -124,12 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(amount) || amount < 1) amount = 10;
         if (amount > 49) amount = 49;
 
-        // Get selected categories from checkboxes
-        const selectedCategories = Array.from(document.querySelectorAll('#categories input:checked'))
-            .map(checkbox => parseInt(checkbox.value, 10));
-
-        // Fetch questions with selected amount and categories
-        const questions = await quizManager.fetchQuestions(amount, selectedCategories);
+        // Fetch questions - categories parameter is ignored in the new implementation
+        const questions = await quizManager.fetchQuestions(amount, []);
 
         // Create new quiz instance
         const newQuizId = Date.now();

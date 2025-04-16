@@ -117,23 +117,16 @@ class QuizManager {
     }
 
     async fetchQuestions(amount = 5, categories = []) {
-        // List of default categories if none are selected
-        const defaultCategories = [9, 17, 20, 21, 22, 23, 24, 25, 27, 28];
-        const selectedCategories = (categories && categories.length > 0) ? categories : defaultCategories;
+        // Always use General Knowledge category (9)
+        const generalKnowledgeCategoryId = 9;
         
         // Get or create session token
         const token = await this.getSessionToken();
         
-        // Build base URL with amount and token
-        let url = `${this.apiUrl}?amount=${amount}`;
+        // Build URL with amount, token, and fixed category
+        let url = `${this.apiUrl}?amount=${amount}&category=${generalKnowledgeCategoryId}`;
         if (token) {
             url += `&token=${token}`;
-        }
-        
-        // Only add category parameter if exactly one category is selected
-        // For multiple categories, we'll filter the results after
-        if (selectedCategories.length === 1) {
-            url += `&category=${selectedCategories[0]}`;
         }
         
         try {
@@ -143,20 +136,7 @@ class QuizManager {
             const data = await response.json();
             
             if (data.response_code === 0) {
-                let results = data.results;
-                
-                // If multiple categories are selected, filter the results
-                if (selectedCategories.length > 1) {
-                    results = results.filter(q => {
-                        const categoryId = this.getCategoryId(q.category);
-                        return selectedCategories.includes(categoryId);
-                    });
-                    
-                    // If we don't have enough questions after filtering, return what we have
-                    console.log(`After filtering for selected categories, got ${results.length} questions`);
-                }
-                
-                return this.processQuestions(results);
+                return this.processQuestions(data.results);
             } else if (data.response_code === 4) {
                 // Token empty, reset token
                 console.log("Token empty, resetting token");
@@ -170,17 +150,7 @@ class QuizManager {
                 const newData = await newResponse.json();
                 
                 if (newData.response_code === 0) {
-                    let results = newData.results;
-                    
-                    // Apply the same filtering logic if needed
-                    if (selectedCategories.length > 1) {
-                        results = results.filter(q => {
-                            const categoryId = this.getCategoryId(q.category);
-                            return selectedCategories.includes(categoryId);
-                        });
-                    }
-                    
-                    return this.processQuestions(results);
+                    return this.processQuestions(newData.results);
                 }
             } else {
                 console.error(`API Error (code ${data.response_code}): `, data);
