@@ -83,36 +83,14 @@ class QuizManager {
     constructor() {
         this.currentQuiz = null;
         this.apiUrl = 'https://opentdb.com/api.php';
-        this.tokenUrl = 'https://opentdb.com/api_token.php?command=request';
-        this.sessionToken = null;
-        this.storageManager = new StorageManager(); // Add StorageManager instance
+        this.storageManager = new StorageManager();
     }
 
     async init() {
-        await this.storageManager.init(); // Initialize StorageManager
+        await this.storageManager.init();
         const savedQuiz = this.storageManager.loadGameState();
         if (savedQuiz) {
-            this.currentQuiz = savedQuiz; // Restore saved quiz state
-        }
-        
-        // Try to load or request a session token
-        this.sessionToken = localStorage.getItem('trivia_token');
-    }
-
-    async getSessionToken() {
-        try {
-            if (!this.sessionToken) {
-                const response = await fetch(this.tokenUrl);
-                const data = await response.json();
-                if (data.response_code === 0) {
-                    this.sessionToken = data.token;
-                    localStorage.setItem('trivia_token', this.sessionToken);
-                }
-            }
-            return this.sessionToken;
-        } catch (error) {
-            console.error('Error getting session token:', error);
-            return null;
+            this.currentQuiz = savedQuiz;
         }
     }
 
@@ -120,45 +98,21 @@ class QuizManager {
         // Always use General Knowledge category (9)
         const generalKnowledgeCategoryId = 9;
         
-        // Get or create session token
-        const token = await this.getSessionToken();
-        
-        // Build URL with amount, token, and fixed category
+        // Build URL with amount and fixed category (no token)
         let url = `${this.apiUrl}?amount=${amount}&category=${generalKnowledgeCategoryId}`;
-        if (token) {
-            url += `&token=${token}`;
-        }
         
         try {
-            // Make a single API request
+            // Make API request
             console.log(`Making API request to: ${url}`);
             const response = await fetch(url);
             const data = await response.json();
             
             if (data.response_code === 0) {
                 return this.processQuestions(data.results);
-            } else if (data.response_code === 4) {
-                // Token empty, reset token
-                console.log("Token empty, resetting token");
-                this.sessionToken = null;
-                localStorage.removeItem('trivia_token');
-                
-                // Try one more time without token
-                console.log("Retrying without token");
-                const newUrl = url.replace(/&token=[^&]+/, '');
-                const newResponse = await fetch(newUrl);
-                const newData = await newResponse.json();
-                
-                if (newData.response_code === 0) {
-                    return this.processQuestions(newData.results);
-                }
             } else {
                 console.error(`API Error (code ${data.response_code}): `, data);
+                return [];
             }
-            
-            // If we get here, we couldn't get questions, return empty array
-            return [];
-            
         } catch (error) {
             console.error('Error fetching questions:', error);
             return [];

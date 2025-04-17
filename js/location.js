@@ -3,12 +3,58 @@ class LocationManager {
         this.watchId = null;
         this.currentPosition = null;
         this.proximityRadius = 15; // meters
+        this.eventListeners = {}; // Add event listener storage
     }
 
     async init() {
         if (!navigator.geolocation) {
             throw new Error('Geolocation is not supported by this browser.');
         }
+    }
+
+    // Returns a Promise that resolves to {lat, lng}
+    getCurrentPosition() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('Geolocation not supported'));
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    this.currentPosition = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    resolve(this.currentPosition);
+                },
+                (error) => {
+                    reject(error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 5000
+                }
+            );
+        });
+    }
+
+    // Add event handling methods
+    addEventListener(event, callback) {
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
+        }
+        this.eventListeners[event].push(callback);
+    }
+
+    removeEventListener(event, callback) {
+        if (!this.eventListeners[event]) return;
+        this.eventListeners[event] = this.eventListeners[event].filter(cb => cb !== callback);
+    }
+
+    emit(event, data) {
+        if (!this.eventListeners[event]) return;
+        this.eventListeners[event].forEach(callback => callback(data));
     }
 
     startTracking() {
