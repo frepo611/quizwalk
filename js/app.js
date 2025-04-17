@@ -528,6 +528,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminControls = document.getElementById('admin-controls');
     
     if (toggleAdminBtn && adminControls) {
+        // Make admin button more visible on mobile
+        function adjustAdminButtonForMobile() {
+            const isMobile = window.innerWidth < 768;
+            
+            if (isMobile) {
+                // Enhanced mobile styling
+                toggleAdminBtn.style.position = 'fixed';
+                toggleAdminBtn.style.bottom = '20px';
+                toggleAdminBtn.style.right = '20px';
+                toggleAdminBtn.style.zIndex = '1000';
+                toggleAdminBtn.style.padding = '12px 16px';
+                toggleAdminBtn.style.fontSize = '16px';
+                toggleAdminBtn.style.backgroundColor = '#007bff';
+                toggleAdminBtn.style.color = 'white';
+                toggleAdminBtn.style.border = 'none';
+                toggleAdminBtn.style.borderRadius = '50px';
+                toggleAdminBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                toggleAdminBtn.style.maxWidth = '200px';
+            } else {
+                // Reset to default styling on desktop
+                toggleAdminBtn.style.position = '';
+                toggleAdminBtn.style.bottom = '';
+                toggleAdminBtn.style.right = '';
+                toggleAdminBtn.style.zIndex = '';
+                toggleAdminBtn.style.padding = '';
+                toggleAdminBtn.style.fontSize = '';
+                toggleAdminBtn.style.backgroundColor = '';
+                toggleAdminBtn.style.color = '';
+                toggleAdminBtn.style.border = '';
+                toggleAdminBtn.style.borderRadius = '';
+                toggleAdminBtn.style.boxShadow = '';
+                toggleAdminBtn.style.maxWidth = '';
+            }
+        }
+        
+        // Apply mobile styling on page load
+        adjustAdminButtonForMobile();
+        
+        // Update styling when window is resized
+        window.addEventListener('resize', adjustAdminButtonForMobile);
+        
         toggleAdminBtn.addEventListener('click', () => {
             const isHidden = adminControls.classList.contains('hidden');
             
